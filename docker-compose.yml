@@ -1,0 +1,22 @@
+services:
+  api:
+    build: .
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    ports: ["8000:8000"]
+    volumes:
+      - ./artifacts:/workspace/artifacts
+      - ./data:/workspace/data:ro
+    environment:
+      ARTIFACT_DIR: artifacts
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+  ui:
+    build: .
+    command: streamlit run demo/streamlit_app.py --server.address 0.0.0.0 --server.port 8501
+    ports: ["8501:8501"]
+    depends_on:
+      api:
+        condition: service_healthy
